@@ -37,10 +37,10 @@ public static class Program
 
     private enum MenuItem
     {
-        Quit,
         Passengers,
         Flights,
         Planes,
-        Crew
+        Crew,
+        Quit
     }
 }
