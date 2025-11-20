@@ -1,7 +1,24 @@
 namespace Internship_3_OOP.Entities;
 
-public sealed class Plane: Entity<Plane>
+public sealed class Plane : Entity<Plane>
 {
+    public enum Class
+    {
+        Economy,
+        Business,
+        First
+    }
+
+    private readonly List<Flight> _flights = [];
+
+    public Plane(string name, DateOnly manufactureDate, IReadOnlyList<Class> classes, int capacity)
+    {
+        Name = name;
+        ManufactureDate = manufactureDate;
+        Classes = classes;
+        Capacity = capacity;
+    }
+
     public string Name
     {
         get;
@@ -36,6 +53,23 @@ public sealed class Plane: Entity<Plane>
         }
     }
 
+    public int Capacity
+    {
+        get;
+        set
+        {
+            if (value > 0)
+            {
+                field = value;
+                UpdateLastChanged();
+            }
+            else
+            {
+                throw new ArgumentException(value.ToString());
+            }
+        }
+    }
+
     public IReadOnlyList<Class> Classes
     {
         get;
@@ -53,15 +87,6 @@ public sealed class Plane: Entity<Plane>
         }
     }
 
-    private readonly List<Flight> _flights = [];
-
-    public Plane(string name, DateOnly manufactureDate, IReadOnlyList<Class> classes)
-    {
-        this.Name = name;
-        ManufactureDate = manufactureDate;
-        Classes = classes;
-    }
-    
     public void AddFlight(Flight flight)
     {
         _flights.Add(flight);
@@ -76,13 +101,5 @@ public sealed class Plane: Entity<Plane>
     {
         foreach (var flight in _flights) flight.Delete();
         base.Delete();
-    }
-
-
-    public enum Class
-    {
-        Economy,
-        Business,
-        First
     }
 }

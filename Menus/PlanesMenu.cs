@@ -13,7 +13,6 @@ public static class PlanesMenu
             foreach (var menuItem in Enum.GetValues<MenuItem>()) Console.WriteLine($"{(int)menuItem} - {menuItem}");
 
             if (Enum.TryParse<MenuItem>(Console.ReadLine(), true, out var command))
-            {
                 switch (command)
                 {
                     case MenuItem.ListAll:
@@ -31,7 +30,6 @@ public static class PlanesMenu
                     case MenuItem.Return:
                         return;
                 }
-            }
 
             Helper.HandleInputError();
         }
@@ -65,6 +63,7 @@ public static class PlanesMenu
         var name = GetPlaneName();
         var manufactureDate = GetManufactureDate();
         var classes = GetClasses();
+        var capacity = GetCapacity();
 
         while (true)
         {
@@ -73,13 +72,14 @@ public static class PlanesMenu
             Console.WriteLine($"Name: {name}");
             Console.WriteLine($"Manufacture Date: {manufactureDate}");
             Console.WriteLine($"Classes: {string.Join(", ", classes)}");
+            Console.WriteLine($"Capacity: {capacity}");
 
             Console.WriteLine("\nConfirm adding this plane? (Y/N)");
 
             switch (Console.ReadKey(true).Key)
             {
                 case ConsoleKey.Y:
-                    var newPlane = new Plane(name, manufactureDate, classes);
+                    var newPlane = new Plane(name, manufactureDate, classes, capacity);
                     Console.WriteLine("\nPlane added successfully! Press any key to continue...");
                     Console.ReadKey();
                     return;
@@ -99,7 +99,6 @@ public static class PlanesMenu
         Console.Clear();
         Console.WriteLine("Search by: 1. ID, 2. Name");
         if (int.TryParse(Console.ReadLine(), out var choice))
-        {
             switch (choice)
             {
                 case 1:
@@ -108,14 +107,10 @@ public static class PlanesMenu
                     {
                         var plane = Plane.All.FirstOrDefault(p => p.Id == id);
                         if (plane != null)
-                        {
                             Console.WriteLine(
                                 $"Plane found: Name: {plane.Name}, Manufacture Date: {plane.ManufactureDate}, Classes: {string.Join(", ", plane.Classes)}");
-                        }
                         else
-                        {
                             Console.WriteLine("Plane not found.");
-                        }
                     }
                     else
                     {
@@ -134,10 +129,8 @@ public static class PlanesMenu
                         {
                             Console.WriteLine("Found planes:");
                             foreach (var plane in planes)
-                            {
                                 Console.WriteLine(
                                     $"- Name: {plane.Name}, Manufacture Date: {plane.ManufactureDate}, Classes: {string.Join(", ", plane.Classes)}");
-                            }
                         }
                         else
                         {
@@ -150,11 +143,8 @@ public static class PlanesMenu
                     Helper.HandleInputError("Invalid choice.");
                     break;
             }
-        }
         else
-        {
             Helper.HandleInputError("Invalid input.");
-        }
 
         Console.WriteLine("Press any key to continue...");
         Console.ReadKey();
@@ -172,13 +162,9 @@ public static class PlanesMenu
                 case 1:
                     Console.WriteLine("Enter ID:");
                     if (Guid.TryParse(Console.ReadLine(), out var id))
-                    {
                         planeToDelete = Plane.All.FirstOrDefault(p => p.Id == id);
-                    }
                     else
-                    {
                         Helper.HandleInputError("Invalid ID format.");
-                    }
 
                     break;
                 case 2:
@@ -189,17 +175,11 @@ public static class PlanesMenu
                         var planes = Plane.All.Where(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
                             .ToList();
                         if (planes.Count == 1)
-                        {
                             planeToDelete = planes[0];
-                        }
                         else if (planes.Count > 1)
-                        {
                             Console.WriteLine("Multiple planes found with that name. Please delete by ID.");
-                        }
                         else
-                        {
                             Console.WriteLine("No plane found with that name.");
-                        }
                     }
 
                     break;
@@ -301,6 +281,18 @@ public static class PlanesMenu
             }
         }
     }
+
+    private static int GetCapacity()
+    {
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine("Enter plane capacity:");
+            if (int.TryParse(Console.ReadLine(), out var capacity) && capacity > 0) return capacity;
+            Helper.HandleInputError("Invalid capacity. Must be a positive number.");
+        }
+    }
+
 
     private enum MenuItem
     {

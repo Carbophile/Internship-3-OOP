@@ -1,38 +1,37 @@
-namespace Internship_3_OOP.Entities
+namespace Internship_3_OOP.Entities;
+
+public sealed class CrewMember(
+    string fName,
+    string lName,
+    DateOnly birthDate,
+    Person<CrewMember>.Sex gender,
+    CrewMember.Position crewPosition)
+    : Person<CrewMember>(fName, lName, birthDate, gender)
 {
-    public sealed class CrewMember(
-        string fName,
-        string lName,
-        DateOnly birthDate,
-        Person<CrewMember>.Sex gender,
-        CrewMember.Position crewPosition)
-        : Person<CrewMember>(fName, lName, birthDate, gender)
+    public enum Position
     {
-        public Position CrewPosition
-        {
-            get;
-            set
-            {
-                field = value;
-                UpdateLastChanged();
-            }
-        } = crewPosition;
+        Pilot,
+        Copilot,
+        FlightAttendant
+    }
 
-        public Crew? Crew
+    public Position CrewPosition
+    {
+        get;
+        set
         {
-            get;
-            set
-            {
-                field = value;
-                UpdateLastChanged();
-            }
+            field = value;
+            UpdateLastChanged();
         }
+    } = crewPosition;
 
-        public enum Position
+    public Crew? Crew
+    {
+        get;
+        set
         {
-            Pilot,
-            Copilot,
-            FlightAttendant
+            field = value;
+            UpdateLastChanged();
         }
     }
 }
