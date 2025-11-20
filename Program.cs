@@ -6,6 +6,7 @@ public static class Program
 {
     public static void Main()
     {
+        SampleCreator.CreateSamples();
         while (true)
         {
             Console.Clear();
