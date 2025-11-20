@@ -235,7 +235,10 @@ public static class PassengersMenu
                                 Book(passenger);
                                 continue;
                             case MenuItem.SearchFlights:
-                                SearchFlights();
+                                FlightFilteringMenu.Menu(Flight.All);
+                                continue;
+                            case MenuItem.FavoriteFlights:
+                                FavoriteFlightsMenu(passenger);
                                 continue;
                             case MenuItem.CancelFlight:
                                 CancelFlight(passenger);
@@ -246,6 +249,136 @@ public static class PassengersMenu
 
                     Helper.HandleInputError();
                 }
+            }
+
+            private static void FavoriteFlightsMenu(Passenger passenger)
+            {
+                while (true)
+                {
+                    Console.Clear();
+                    Console.WriteLine("--- Favorite Flights ---");
+                    Console.WriteLine("1 - List Favorite Flights");
+                    Console.WriteLine("2 - Add Favorite Flight");
+                    Console.WriteLine("3 - Remove Favorite Flight");
+                    Console.WriteLine("0 - Return");
+
+                    switch (Console.ReadLine())
+                    {
+                        case "1":
+                            ListFavoriteFlights(passenger);
+                            break;
+                        case "2":
+                            AddFavoriteFlight(passenger);
+                            break;
+                        case "3":
+                            RemoveFavoriteFlight(passenger);
+                            break;
+                        case "0":
+                            return;
+                        default:
+                            Helper.HandleInputError();
+                            break;
+                    }
+                }
+            }
+
+            private static void ListFavoriteFlights(Passenger passenger)
+            {
+                Console.Clear();
+                var favoriteFlights = passenger.FavoriteFlights;
+                if (favoriteFlights.Count == 0)
+                {
+                    Console.WriteLine("You have no favorite flights.");
+                }
+                else
+                {
+                    Console.WriteLine("Your favorite flights:");
+                    for (var i = 0; i < favoriteFlights.Count; i++)
+                    {
+                        var flight = favoriteFlights[i];
+                        Console.WriteLine(
+                            $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
+                    }
+                }
+
+                Console.WriteLine("\nPress any key to continue...");
+                Console.ReadKey();
+            }
+
+            private static void AddFavoriteFlight(Passenger passenger)
+            {
+                Console.Clear();
+                var availableFlights = Flight.All.Except(passenger.FavoriteFlights).ToList();
+                if (availableFlights.Count == 0)
+                {
+                    Console.WriteLine("No flights to add to favorites.");
+                    Console.ReadKey();
+                    return;
+                }
+
+                Console.WriteLine("Available flights to add to favorites:");
+                for (var i = 0; i < availableFlights.Count; i++)
+                {
+                    var flight = availableFlights[i];
+                    Console.WriteLine(
+                        $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
+                }
+
+                Console.WriteLine("Enter the number of the flight to add (or 0 to cancel):");
+                if (int.TryParse(Console.ReadLine(), out var choice) && choice > 0 && choice <= availableFlights.Count)
+                {
+                    var flight = availableFlights[choice - 1];
+                    passenger.AddFavoriteFlight(flight);
+                    Console.WriteLine("Flight added to favorites! Press any key to continue...");
+                }
+                else if (choice == 0)
+                {
+                    Console.WriteLine("Operation cancelled.");
+                }
+                else
+                {
+                    Helper.HandleInputError("Invalid flight choice.");
+                }
+
+                Console.ReadKey();
+            }
+
+            private static void RemoveFavoriteFlight(Passenger passenger)
+            {
+                Console.Clear();
+                var favoriteFlights = passenger.FavoriteFlights.ToList();
+                if (favoriteFlights.Count == 0)
+                {
+                    Console.WriteLine("You have no favorite flights to remove.");
+                    Console.ReadKey();
+                    return;
+                }
+
+                Console.WriteLine("Your favorite flights:");
+                for (var i = 0; i < favoriteFlights.Count; i++)
+                {
+                    var flight = favoriteFlights[i];
+                    Console.WriteLine(
+                        $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
+                }
+
+                Console.WriteLine("Enter the number of the flight to remove (or 0 to cancel):");
+                if (int.TryParse(Console.ReadLine(), out var choice) && choice > 0 && choice <= favoriteFlights.Count)
+                {
+                    var flight = favoriteFlights[choice - 1];
+                    passenger.RemoveFavoriteFlight(flight);
+                    Console.WriteLine("Flight removed from favorites! Press any key to continue...");
+                }
+                else if (choice == 0)
+                {
+                    Console.WriteLine("Operation cancelled.");
+                }
+                else
+                {
+                    Helper.HandleInputError("Invalid flight choice.");
+                }
+
+                Console.ReadKey();
             }
 
             private static void MyBookings(Passenger passenger)
@@ -324,45 +457,6 @@ public static class PassengersMenu
                 Console.ReadKey();
             }
 
-            private static void SearchFlights()
-            {
-                Console.Clear();
-                Console.WriteLine("Enter departure airport (optional):");
-                var departure = Console.ReadLine();
-                Console.WriteLine("Enter arrival airport (optional):");
-                var arrival = Console.ReadLine();
-
-                var filteredFlights = Flight.All.Where(f =>
-                    (string.IsNullOrEmpty(departure) ||
-                     f.DepartureAirport.Equals(departure, StringComparison.OrdinalIgnoreCase)) &&
-                    (string.IsNullOrEmpty(arrival) ||
-                     f.ArrivalAirport.Equals(arrival, StringComparison.OrdinalIgnoreCase)) &&
-                    f.DepartureTime > DateTimeOffset.Now).ToList();
-
-                if (filteredFlights.Count == 0)
-                {
-                    Console.WriteLine("No flights found.");
-                }
-                else
-                {
-                    Console.WriteLine("Sort by: 1. Departure Airport Name, 2. List Order (default)");
-                    var sortChoice = Console.ReadLine();
-                    if (sortChoice == "1") filteredFlights = filteredFlights.OrderBy(f => f.DepartureAirport).ToList();
-
-                    Console.WriteLine("Found flights:");
-                    for (var i = 0; i < filteredFlights.Count; i++)
-                    {
-                        var flight = filteredFlights[i];
-                        var availableSeats = flight.Plane.Capacity - flight.Bookings.Count;
-                        Console.WriteLine(
-                            $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}, Available Seats: {availableSeats}");
-                    }
-                }
-
-                Console.WriteLine("Press any key to continue...");
-                Console.ReadKey();
-            }
-
             private static void CancelFlight(Passenger passenger)
             {
                 Console.Clear();
@@ -413,6 +507,7 @@ public static class PassengersMenu
                 MyBookings,
                 Book,
                 SearchFlights,
+                FavoriteFlights,
                 CancelFlight,
                 Logout
             }

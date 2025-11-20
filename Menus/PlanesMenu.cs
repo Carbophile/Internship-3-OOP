@@ -15,14 +15,11 @@ public static class PlanesMenu
             if (Enum.TryParse<MenuItem>(Console.ReadLine(), true, out var command))
                 switch (command)
                 {
-                    case MenuItem.ListAll:
-                        ListAllPlanes();
+                    case MenuItem.ViewAndSearch:
+                        ViewAndSearchPlanes();
                         continue;
                     case MenuItem.Add:
                         AddNewPlane();
-                        continue;
-                    case MenuItem.Search:
-                        SearchPlanes();
                         continue;
                     case MenuItem.Delete:
                         DeletePlane();
@@ -35,27 +32,110 @@ public static class PlanesMenu
         }
     }
 
-    private static void ListAllPlanes()
+    private static void ViewAndSearchPlanes()
+    {
+        var planes = Plane.All.ToList();
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine("--- Search and Sort Planes ---");
+            Console.WriteLine("1 - Filter by Name");
+            Console.WriteLine("2 - Sort Options");
+            Console.WriteLine("3 - Show Current Results");
+            Console.WriteLine("4 - Reset Filters and Sorters");
+            Console.WriteLine("0 - Return");
+
+            switch (Console.ReadLine())
+            {
+                case "1":
+                    Console.WriteLine("Enter Name:");
+                    var name = Console.ReadLine();
+                    if (Helper.ValidateString(name))
+                        planes = planes.Where(p => p.Name.Contains(name!, StringComparison.OrdinalIgnoreCase)).ToList();
+                    break;
+                case "2":
+                    SortMenu(ref planes);
+                    break;
+                case "3":
+                    Console.Clear();
+                    ShowPlanes(planes);
+                    Console.WriteLine("\nPress any key to continue...");
+                    Console.ReadKey();
+                    break;
+                case "4":
+                    planes = Plane.All.ToList();
+                    Console.WriteLine("Filters and sorters have been reset. Press any key to continue...");
+                    Console.ReadKey();
+                    break;
+                case "0":
+                    return;
+                default:
+                    Helper.HandleInputError();
+                    break;
+            }
+        }
+    }
+
+    private static void SortMenu(ref List<Plane> planes)
     {
         Console.Clear();
-        var planes = Plane.All;
-        if (planes.Count == 0)
+        Console.WriteLine("--- Sort Options ---");
+        Console.WriteLine("1 - By Creation Time (Asc)");
+        Console.WriteLine("2 - By Creation Time (Desc)");
+        Console.WriteLine("3 - By Manufacture Date (Asc)");
+        Console.WriteLine("4 - By Manufacture Date (Desc)");
+        Console.WriteLine("5 - By Number of Flights (Asc)");
+        Console.WriteLine("6 - By Number of Flights (Desc)");
+        Console.WriteLine("0 - Return");
+
+        switch (Console.ReadLine())
         {
-            Console.WriteLine("No planes available.");
+            case "1":
+                planes = planes.OrderBy(p => p.Created).ToList();
+                break;
+            case "2":
+                planes = planes.OrderByDescending(p => p.Created).ToList();
+                break;
+            case "3":
+                planes = planes.OrderBy(p => p.ManufactureDate).ToList();
+                break;
+            case "4":
+                planes = planes.OrderByDescending(p => p.ManufactureDate).ToList();
+                break;
+            case "5":
+                planes = planes.OrderBy(p => p.Flights.Count).ToList();
+                break;
+            case "6":
+                planes = planes.OrderByDescending(p => p.Flights.Count).ToList();
+                break;
+            case "0":
+                return;
+            default:
+                Helper.HandleInputError();
+                break;
+        }
+
+        Console.WriteLine("Sort applied. Press any key to continue...");
+        Console.ReadKey();
+    }
+
+    private static void ShowPlanes(IEnumerable<Plane> planes)
+    {
+        var planesList = planes.ToList();
+        if (planesList.Count == 0)
+        {
+            Console.WriteLine("No planes found.");
         }
         else
         {
-            Console.WriteLine("Available planes:");
-            for (var i = 0; i < planes.Count; i++)
+            Console.WriteLine("Found planes:");
+            for (var i = 0; i < planesList.Count; i++)
             {
-                var plane = planes[i];
+                var plane = planesList[i];
                 Console.WriteLine(
-                    $"{i + 1}. Name: {plane.Name}, Manufacture Date: {plane.ManufactureDate}, Classes: {string.Join(", ", plane.Classes)}");
+                    $"{i + 1}. Name: {plane.Name}, Manufacture Date: {plane.ManufactureDate}, Classes: {string.Join(", ", plane.Classes)}, Flights: {plane.Flights.Count}");
             }
         }
-
-        Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
     }
 
     private static void AddNewPlane()
@@ -79,7 +159,7 @@ public static class PlanesMenu
             switch (Console.ReadKey(true).Key)
             {
                 case ConsoleKey.Y:
-                    var newPlane = new Plane(name, manufactureDate, classes, capacity);
+                    new Plane(name, manufactureDate, classes, capacity);
                     Console.WriteLine("\nPlane added successfully! Press any key to continue...");
                     Console.ReadKey();
                     return;
@@ -92,62 +172,6 @@ public static class PlanesMenu
                     break;
             }
         }
-    }
-
-    private static void SearchPlanes()
-    {
-        Console.Clear();
-        Console.WriteLine("Search by: 1. ID, 2. Name");
-        if (int.TryParse(Console.ReadLine(), out var choice))
-            switch (choice)
-            {
-                case 1:
-                    Console.WriteLine("Enter ID:");
-                    if (Guid.TryParse(Console.ReadLine(), out var id))
-                    {
-                        var plane = Plane.All.FirstOrDefault(p => p.Id == id);
-                        if (plane != null)
-                            Console.WriteLine(
-                                $"Plane found: Name: {plane.Name}, Manufacture Date: {plane.ManufactureDate}, Classes: {string.Join(", ", plane.Classes)}");
-                        else
-                            Console.WriteLine("Plane not found.");
-                    }
-                    else
-                    {
-                        Helper.HandleInputError("Invalid ID format.");
-                    }
-
-                    break;
-                case 2:
-                    Console.WriteLine("Enter Name:");
-                    var name = Console.ReadLine();
-                    if (Helper.ValidateString(name))
-                    {
-                        var planes = Plane.All.Where(p => p.Name.Contains(name!, StringComparison.OrdinalIgnoreCase))
-                            .ToList();
-                        if (planes.Count > 0)
-                        {
-                            Console.WriteLine("Found planes:");
-                            foreach (var plane in planes)
-                                Console.WriteLine(
-                                    $"- Name: {plane.Name}, Manufacture Date: {plane.ManufactureDate}, Classes: {string.Join(", ", plane.Classes)}");
-                        }
-                        else
-                        {
-                            Console.WriteLine("No planes found with that name.");
-                        }
-                    }
-
-                    break;
-                default:
-                    Helper.HandleInputError("Invalid choice.");
-                    break;
-            }
-        else
-            Helper.HandleInputError("Invalid input.");
-
-        Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
     }
 
     private static void DeletePlane()
@@ -296,9 +320,8 @@ public static class PlanesMenu
 
     private enum MenuItem
     {
-        ListAll,
+        ViewAndSearch,
         Add,
-        Search,
         Delete,
         Return
     }

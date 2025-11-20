@@ -113,11 +113,13 @@ public sealed class Flight : Entity<Flight>
     {
         if (_bookings.Count >= Plane.Capacity) throw new InvalidOperationException("Flight is full.");
         _bookings.Add(booking);
+        UpdateLastChanged();
     }
 
     public void RemoveBooking(Booking booking)
     {
         _bookings.Remove(booking);
+        UpdateLastChanged();
     }
 
     public override void Delete()
