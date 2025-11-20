@@ -221,12 +221,11 @@ public static class PassengersMenu
                 while (true)
                 {
                     Console.Clear();
-                    
+
                     foreach (var menuItem in Enum.GetValues<MenuItem>())
                         Console.WriteLine($"{(int)menuItem} - {menuItem}");
 
                     if (Enum.TryParse<MenuItem>(Console.ReadLine(), true, out var command))
-                    {
                         switch (command)
                         {
                             case MenuItem.MyBookings:
@@ -244,7 +243,6 @@ public static class PassengersMenu
                             case MenuItem.Logout:
                                 return;
                         }
-                    }
 
                     Helper.HandleInputError();
                 }
@@ -276,7 +274,8 @@ public static class PassengersMenu
             private static void Book(Passenger passenger)
             {
                 Console.Clear();
-                var availableFlights = Flight.All.Where(f => f.DepartureTime > DateTimeOffset.Now).ToList();
+                var availableFlights = Flight.All
+                    .Where(f => f.DepartureTime > DateTimeOffset.Now && f.Bookings.Count < f.Plane.Capacity).ToList();
                 if (availableFlights.Count == 0)
                 {
                     Console.WriteLine("No available flights.");
@@ -288,23 +287,22 @@ public static class PassengersMenu
                 for (var i = 0; i < availableFlights.Count; i++)
                 {
                     var flight = availableFlights[i];
+                    var availableSeats = flight.Plane.Capacity - flight.Bookings.Count;
                     Console.WriteLine(
-                        $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
+                        $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}, Available Seats: {availableSeats}");
                 }
 
                 Console.WriteLine("Enter the number of the flight you want to book (or 0 to cancel):");
                 if (int.TryParse(Console.ReadLine(), out var choice) && choice > 0 && choice <= availableFlights.Count)
                 {
                     var flight = availableFlights[choice - 1];
-                    
+
                     Console.WriteLine("Select a class:");
                     var k = 0;
-                    foreach (var flightClass in flight.Plane.Classes)
-                    {
-                        Console.WriteLine($"{k++} - {flightClass}");
-                    }
+                    foreach (var flightClass in flight.Plane.Classes) Console.WriteLine($"{k++} - {flightClass}");
 
-                    if (int.TryParse(Console.ReadLine(), out var classChoice) && classChoice >= 0 && classChoice < flight.Plane.Classes.Count)
+                    if (int.TryParse(Console.ReadLine(), out var classChoice) && classChoice >= 0 &&
+                        classChoice < flight.Plane.Classes.Count)
                     {
                         new Booking(passenger, flight, flight.Plane.Classes[classChoice]);
                         Console.WriteLine("Booking successful! Press any key to continue...");
@@ -349,17 +347,15 @@ public static class PassengersMenu
                 {
                     Console.WriteLine("Sort by: 1. Departure Airport Name, 2. List Order (default)");
                     var sortChoice = Console.ReadLine();
-                    if (sortChoice == "1")
-                    {
-                        filteredFlights = filteredFlights.OrderBy(f => f.DepartureAirport).ToList();
-                    }
+                    if (sortChoice == "1") filteredFlights = filteredFlights.OrderBy(f => f.DepartureAirport).ToList();
 
                     Console.WriteLine("Found flights:");
                     for (var i = 0; i < filteredFlights.Count; i++)
                     {
                         var flight = filteredFlights[i];
+                        var availableSeats = flight.Plane.Capacity - flight.Bookings.Count;
                         Console.WriteLine(
-                            $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
+                            $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}, Available Seats: {availableSeats}");
                     }
                 }
 

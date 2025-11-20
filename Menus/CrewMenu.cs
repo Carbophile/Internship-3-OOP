@@ -13,7 +13,6 @@ public static class CrewMenu
             foreach (var menuItem in Enum.GetValues<MenuItem>()) Console.WriteLine($"{(int)menuItem} - {menuItem}");
 
             if (Enum.TryParse<MenuItem>(Console.ReadLine(), true, out var command))
-            {
                 switch (command)
                 {
                     case MenuItem.ListAll:
@@ -28,7 +27,6 @@ public static class CrewMenu
                     case MenuItem.Return:
                         return;
                 }
-            }
 
             Helper.HandleInputError();
         }
@@ -82,7 +80,6 @@ public static class CrewMenu
         Console.WriteLine("Do you want to proceed? (Y/N)");
 
         if (Console.ReadKey(true).Key == ConsoleKey.Y)
-        {
             try
             {
                 new Crew(pilot, copilot, attendant1, attendant2);
@@ -92,11 +89,8 @@ public static class CrewMenu
             {
                 Helper.HandleInputError(e.Message);
             }
-        }
         else
-        {
             Console.WriteLine("Crew creation cancelled. Press any key to continue...");
-        }
 
         Console.ReadKey();
     }
@@ -128,10 +122,7 @@ public static class CrewMenu
             if (int.TryParse(Console.ReadLine(), out var choice))
             {
                 if (choice == 0) return null;
-                if (choice > 0 && choice <= availableMembers.Count)
-                {
-                    return availableMembers[choice - 1];
-                }
+                if (choice > 0 && choice <= availableMembers.Count) return availableMembers[choice - 1];
             }
 
             Helper.HandleInputError();
