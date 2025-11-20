@@ -6,7 +6,7 @@ public sealed class Flight : Entity<Flight>
 
 
     public Flight(string departureAirport, string arrivalAirport,
-        DateTimeOffset departureTime, DateTimeOffset arrivalTime, Crew crew, Plane plane)
+        DateTimeOffset departureTime, DateTimeOffset arrivalTime, Crew crew, Plane plane, long distance)
     {
         DepartureAirport = departureAirport;
         ArrivalAirport = arrivalAirport;
@@ -15,34 +15,12 @@ public sealed class Flight : Entity<Flight>
         crew.AddFlight(this);
         Plane = plane;
         plane.AddFlight(this);
+        Distance = distance;
     }
 
-    public Plane Plane
-    {
-        get;
-        set
-        {
-            field = value;
-            UpdateLastChanged();
-        }
-    }
+    public Plane Plane { get; set; }
 
-    public long Distance
-    {
-        get;
-        set
-        {
-            if (value > 0)
-            {
-                field = value;
-                UpdateLastChanged();
-            }
-            else
-            {
-                throw new ArgumentException(value.ToString());
-            }
-        }
-    }
+    public long Distance { get; set; }
 
     public TimeSpan Duration => ArrivalTime - DepartureTime;
 
@@ -52,7 +30,7 @@ public sealed class Flight : Entity<Flight>
     public string ArrivalAirport { get; set; }
     public DateTimeOffset DepartureTime { get; private set; }
     public DateTimeOffset ArrivalTime { get; private set; }
-    public Crew Crew { get; }
+    public Crew Crew { get; set; }
 
     public void UpdateFlightTime(DateTimeOffset departure, DateTimeOffset arrival)
     {
@@ -111,7 +89,8 @@ public sealed class Flight : Entity<Flight>
 
     public void AddBooking(Booking booking)
     {
-        if (_bookings.Count >= Plane.Capacity) throw new InvalidOperationException("Flight is full.");
+        if (_bookings.Count >= Plane.ClassCapacities.Values.Sum())
+            throw new InvalidOperationException("Flight is full.");
         _bookings.Add(booking);
         UpdateLastChanged();
     }

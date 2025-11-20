@@ -407,8 +407,7 @@ public static class PassengersMenu
             private static void Book(Passenger passenger)
             {
                 Console.Clear();
-                var availableFlights = Flight.All
-                    .Where(f => f.DepartureTime > DateTimeOffset.Now && f.Bookings.Count < f.Plane.Capacity).ToList();
+                var availableFlights = Flight.All.Where(f => f.DepartureTime > DateTimeOffset.Now).ToList();
                 if (availableFlights.Count == 0)
                 {
                     Console.WriteLine("No available flights.");
@@ -420,9 +419,11 @@ public static class PassengersMenu
                 for (var i = 0; i < availableFlights.Count; i++)
                 {
                     var flight = availableFlights[i];
-                    var availableSeats = flight.Plane.Capacity - flight.Bookings.Count;
+                    var availableSeats = string.Join(", ",
+                        flight.Plane.ClassCapacities.Select(kv =>
+                            $"{kv.Key}: {kv.Value - flight.Bookings.Count(b => b.FlightClass == kv.Key)}"));
                     Console.WriteLine(
-                        $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}, Available Seats: {availableSeats}");
+                        $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}, Available Seats: [{availableSeats}]");
                 }
 
                 Console.WriteLine("Enter the number of the flight you want to book (or 0 to cancel):");
@@ -431,14 +432,31 @@ public static class PassengersMenu
                     var flight = availableFlights[choice - 1];
 
                     Console.WriteLine("Select a class:");
-                    var k = 0;
-                    foreach (var flightClass in flight.Plane.Classes) Console.WriteLine($"{k++} - {flightClass}");
-
-                    if (int.TryParse(Console.ReadLine(), out var classChoice) && classChoice >= 0 &&
-                        classChoice < flight.Plane.Classes.Count)
+                    var availableClasses = flight.Plane.ClassCapacities.Keys.ToList();
+                    for (var i = 0; i < availableClasses.Count; i++)
                     {
-                        new Booking(passenger, flight, flight.Plane.Classes[classChoice]);
-                        Console.WriteLine("Booking successful! Press any key to continue...");
+                        var flightClass = availableClasses[i];
+                        var availableSeats = flight.Plane.ClassCapacities[flightClass] -
+                                             flight.Bookings.Count(b => b.FlightClass == flightClass);
+                        if (availableSeats > 0)
+                            Console.WriteLine($"{i + 1} - {flightClass} ({availableSeats} seats available)");
+                    }
+
+                    if (int.TryParse(Console.ReadLine(), out var classChoice) && classChoice > 0 &&
+                        classChoice <= availableClasses.Count)
+                    {
+                        var selectedClass = availableClasses[classChoice - 1];
+                        var availableSeats = flight.Plane.ClassCapacities[selectedClass] -
+                                             flight.Bookings.Count(b => b.FlightClass == selectedClass);
+                        if (availableSeats > 0)
+                        {
+                            new Booking(passenger, flight, selectedClass);
+                            Console.WriteLine("Booking successful! Press any key to continue...");
+                        }
+                        else
+                        {
+                            Helper.HandleInputError("No available seats in this class.");
+                        }
                     }
                     else
                     {

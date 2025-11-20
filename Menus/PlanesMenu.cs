@@ -132,8 +132,9 @@ public static class PlanesMenu
             for (var i = 0; i < planesList.Count; i++)
             {
                 var plane = planesList[i];
+                var classCapacities = string.Join(", ", plane.ClassCapacities.Select(kv => $"{kv.Key}: {kv.Value}"));
                 Console.WriteLine(
-                    $"{i + 1}. Name: {plane.Name}, Manufacture Date: {plane.ManufactureDate}, Classes: {string.Join(", ", plane.Classes)}, Flights: {plane.Flights.Count}");
+                    $"{i + 1}. Name: {plane.Name}, Manufacture Date: {plane.ManufactureDate}, Class Capacities: [{classCapacities}], Flights: {plane.Flights.Count}");
             }
         }
     }
@@ -142,8 +143,7 @@ public static class PlanesMenu
     {
         var name = GetPlaneName();
         var manufactureDate = GetManufactureDate();
-        var classes = GetClasses();
-        var capacity = GetCapacity();
+        var classCapacities = GetClassCapacities();
 
         while (true)
         {
@@ -151,15 +151,15 @@ public static class PlanesMenu
 
             Console.WriteLine($"Name: {name}");
             Console.WriteLine($"Manufacture Date: {manufactureDate}");
-            Console.WriteLine($"Classes: {string.Join(", ", classes)}");
-            Console.WriteLine($"Capacity: {capacity}");
+            var classCapacitiesString = string.Join(", ", classCapacities.Select(kv => $"{kv.Key}: {kv.Value}"));
+            Console.WriteLine($"Class Capacities: [{classCapacitiesString}]");
 
             Console.WriteLine("\nConfirm adding this plane? (Y/N)");
 
             switch (Console.ReadKey(true).Key)
             {
                 case ConsoleKey.Y:
-                    new Plane(name, manufactureDate, classes, capacity);
+                    new Plane(name, manufactureDate, classCapacities);
                     Console.WriteLine("\nPlane added successfully! Press any key to continue...");
                     Console.ReadKey();
                     return;
@@ -263,35 +263,38 @@ public static class PlanesMenu
         }
     }
 
-    private static List<Plane.Class> GetClasses()
+    private static Dictionary<Plane.Class, int> GetClassCapacities()
     {
-        var classes = new List<Plane.Class>();
+        var classCapacities = new Dictionary<Plane.Class, int>();
         while (true)
         {
             Console.Clear();
             Console.WriteLine("Select a class to add (or 0 to finish):");
             foreach (var classOption in Enum.GetValues<Plane.Class>())
-                Console.WriteLine($"{(int)classOption + 1} - {classOption}");
+                if (!classCapacities.ContainsKey(classOption))
+                    Console.WriteLine($"{(int)classOption + 1} - {classOption}");
 
             if (int.TryParse(Console.ReadLine(), out var choice))
             {
                 if (choice == 0)
                 {
-                    if (classes.Count > 0) return classes;
-                    Helper.HandleInputError("At least one class must be selected.");
+                    if (classCapacities.Count > 0) return classCapacities;
+                    Helper.HandleInputError("At least one class must be added.");
                 }
                 else if (choice > 0 && choice <= Enum.GetValues<Plane.Class>().Length)
                 {
                     var selectedClass = (Plane.Class)(choice - 1);
-                    if (!classes.Contains(selectedClass))
+                    if (!classCapacities.ContainsKey(selectedClass))
                     {
-                        classes.Add(selectedClass);
-                        Console.WriteLine($"{selectedClass} added. Press any key to add another class or finish.");
+                        var capacity = GetCapacityForClass(selectedClass);
+                        classCapacities.Add(selectedClass, capacity);
+                        Console.WriteLine(
+                            $"{selectedClass} with capacity {capacity} added. Press any key to add another class or finish.");
                         Console.ReadKey();
                     }
                     else
                     {
-                        Helper.HandleInputError("Class already selected.");
+                        Helper.HandleInputError("Class already added.");
                     }
                 }
                 else
@@ -306,12 +309,12 @@ public static class PlanesMenu
         }
     }
 
-    private static int GetCapacity()
+    private static int GetCapacityForClass(Plane.Class planeClass)
     {
         while (true)
         {
             Console.Clear();
-            Console.WriteLine("Enter plane capacity:");
+            Console.WriteLine($"Enter capacity for {planeClass} class:");
             if (int.TryParse(Console.ReadLine(), out var capacity) && capacity > 0) return capacity;
             Helper.HandleInputError("Invalid capacity. Must be a positive number.");
         }
