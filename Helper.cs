@@ -70,4 +70,21 @@ public static class Helper
         if (output) HandleInputError("Invalid date format");
         return null;
     }
+
+    public static bool ValidateList<T>(IReadOnlyList<T> list, bool output = false)
+    {
+        if (list.Count == 0)
+        {
+            if (output) HandleInputError("List cannot be empty");
+            return false;
+        }
+
+        if (list.Count != list.Distinct().Count())
+        {
+            if (output) HandleInputError("List cannot contain duplicate values");
+            return false;
+        }
+
+        return true;
+    }
 }
