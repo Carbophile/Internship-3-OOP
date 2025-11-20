@@ -208,10 +208,203 @@ public static class PassengersMenu
             {
                 Console.WriteLine($"\nWelcome, {passenger.FName}! Press any key to continue...");
                 Console.ReadKey();
-                throw new NotImplementedException();
+                LoggedinMenu.Menu(passenger);
             }
 
             Helper.HandleInputError("Invalid email or password");
+        }
+
+        private static class LoggedinMenu
+        {
+            public static void Menu(Passenger passenger)
+            {
+                while (true)
+                {
+                    Console.Clear();
+                    
+                    foreach (var menuItem in Enum.GetValues<MenuItem>())
+                        Console.WriteLine($"{(int)menuItem} - {menuItem}");
+
+                    if (Enum.TryParse<MenuItem>(Console.ReadLine(), true, out var command))
+                    {
+                        switch (command)
+                        {
+                            case MenuItem.MyBookings:
+                                MyBookings(passenger);
+                                continue;
+                            case MenuItem.Book:
+                                Book(passenger);
+                                continue;
+                            case MenuItem.SearchFlights:
+                                SearchFlights();
+                                continue;
+                            case MenuItem.CancelFlight:
+                                CancelFlight(passenger);
+                                continue;
+                            case MenuItem.Logout:
+                                return;
+                        }
+                    }
+
+                    Helper.HandleInputError();
+                }
+            }
+
+            private static void MyBookings(Passenger passenger)
+            {
+                Console.Clear();
+                var bookings = passenger.Bookings;
+                if (bookings.Count == 0)
+                {
+                    Console.WriteLine("You have no bookings.");
+                }
+                else
+                {
+                    Console.WriteLine("Your bookings:");
+                    for (var i = 0; i < bookings.Count; i++)
+                    {
+                        var booking = bookings[i];
+                        Console.WriteLine(
+                            $"{i + 1}. Flight from {booking.Flight.DepartureAirport} to {booking.Flight.ArrivalAirport}, Distance: {booking.Flight.Distance}km, at {booking.Flight.DepartureTime}");
+                    }
+                }
+
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+            }
+
+            private static void Book(Passenger passenger)
+            {
+                Console.Clear();
+                var availableFlights = Flight.All.Where(f => f.DepartureTime > DateTimeOffset.Now).ToList();
+                if (availableFlights.Count == 0)
+                {
+                    Console.WriteLine("No available flights.");
+                    Console.ReadKey();
+                    return;
+                }
+
+                Console.WriteLine("Available flights:");
+                for (var i = 0; i < availableFlights.Count; i++)
+                {
+                    var flight = availableFlights[i];
+                    Console.WriteLine(
+                        $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
+                }
+
+                Console.WriteLine("Enter the number of the flight you want to book (or 0 to cancel):");
+                if (int.TryParse(Console.ReadLine(), out var choice) && choice > 0 && choice <= availableFlights.Count)
+                {
+                    var flight = availableFlights[choice - 1];
+                    var newBooking = new Booking(passenger, flight);
+                    Console.WriteLine("Booking successful! Press any key to continue...");
+                }
+                else if (choice == 0)
+                {
+                    Console.WriteLine("Booking cancelled.");
+                }
+                else
+                {
+                    Helper.HandleInputError("Invalid choice.");
+                }
+
+                Console.ReadKey();
+            }
+
+            private static void SearchFlights()
+            {
+                Console.Clear();
+                Console.WriteLine("Enter departure airport (optional):");
+                var departure = Console.ReadLine();
+                Console.WriteLine("Enter arrival airport (optional):");
+                var arrival = Console.ReadLine();
+
+                var filteredFlights = Flight.All.Where(f =>
+                    (string.IsNullOrEmpty(departure) ||
+                     f.DepartureAirport.Equals(departure, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrEmpty(arrival) ||
+                     f.ArrivalAirport.Equals(arrival, StringComparison.OrdinalIgnoreCase)) &&
+                    f.DepartureTime > DateTimeOffset.Now).ToList();
+
+                if (filteredFlights.Count == 0)
+                {
+                    Console.WriteLine("No flights found.");
+                }
+                else
+                {
+                    Console.WriteLine("Sort by: 1. Departure Airport Name, 2. List Order (default)");
+                    var sortChoice = Console.ReadLine();
+                    if (sortChoice == "1")
+                    {
+                        filteredFlights = filteredFlights.OrderBy(f => f.DepartureAirport).ToList();
+                    }
+
+                    Console.WriteLine("Found flights:");
+                    for (var i = 0; i < filteredFlights.Count; i++)
+                    {
+                        var flight = filteredFlights[i];
+                        Console.WriteLine(
+                            $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
+                    }
+                }
+
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+            }
+
+            private static void CancelFlight(Passenger passenger)
+            {
+                Console.Clear();
+                var bookings = passenger.Bookings.ToList();
+                if (bookings.Count == 0)
+                {
+                    Console.WriteLine("You have no bookings to cancel.");
+                    Console.ReadKey();
+                    return;
+                }
+
+                Console.WriteLine("Your bookings:");
+                for (var i = 0; i < bookings.Count; i++)
+                {
+                    var booking = bookings[i];
+                    Console.WriteLine(
+                        $"{i + 1}. Flight from {booking.Flight.DepartureAirport} to {booking.Flight.ArrivalAirport}, Distance: {booking.Flight.Distance}km, at {booking.Flight.DepartureTime}");
+                }
+
+                Console.WriteLine("Enter the number of the booking you want to cancel (or 0 to return):");
+                if (int.TryParse(Console.ReadLine(), out var choice) && choice > 0 && choice <= bookings.Count)
+                {
+                    var booking = bookings[choice - 1];
+                    if ((booking.Flight.DepartureTime - DateTimeOffset.Now).TotalHours < 24)
+                    {
+                        Helper.HandleInputError("Cannot cancel a flight that departs in less than 24 hours.");
+                    }
+                    else
+                    {
+                        booking.Delete();
+                        Console.WriteLine("Booking cancelled successfully.");
+                    }
+                }
+                else if (choice == 0)
+                {
+                    Console.WriteLine("Cancellation aborted.");
+                }
+                else
+                {
+                    Helper.HandleInputError("Invalid choice.");
+                }
+
+                Console.ReadKey();
+            }
+
+            private enum MenuItem
+            {
+                MyBookings,
+                Book,
+                SearchFlights,
+                CancelFlight,
+                Logout
+            }
         }
     }
 }

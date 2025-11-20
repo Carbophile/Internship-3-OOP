@@ -51,4 +51,15 @@ public sealed class Passenger : Person<Passenger>
     {
         _bookings.Add(booking);
     }
+    
+    public void RemoveBooking(Booking booking)
+    {
+        _bookings.Remove(booking);
+    }
+
+    public override void Delete()
+    {
+        foreach (var booking in _bookings) booking.Delete();
+        base.Delete();
+    }
 }
