@@ -41,29 +41,50 @@ public static class FlightsMenu
     {
         var departureAirport = GetAirport("Enter departure airport:");
         var arrivalAirport = GetAirport("Enter arrival airport:");
+        var distance = GetDistance();
         var departureTime = GetDateTime("Enter departure time (YYYY-MM-DD HH:MM):");
         var arrivalTime = GetDateTime("Enter arrival time (YYYY-MM-DD HH:MM):");
         var crew = GetCrew();
         var plane = GetPlane();
 
         if (crew == null || plane == null)
-        {
-            Helper.HandleInputError("Invalid crew or plane selection.");
+            // GetCrew/GetPlane already handled user notification and wait
             return;
-        }
 
-        try
-        {
-            new Flight(departureAirport, arrivalAirport, departureTime, arrivalTime, crew, plane);
-            Console.WriteLine("Flight added successfully!");
-        }
-        catch (ArgumentException e)
-        {
-            Helper.HandleInputError(e.Message);
-        }
+        Console.Clear();
+        Console.WriteLine("You are about to add a new flight with the following details:");
+        Console.WriteLine($"Departure: {departureAirport} at {departureTime:yyyy-MM-dd HH:mm}");
+        Console.WriteLine($"Arrival: {arrivalAirport} at {arrivalTime:yyyy-MM-dd HH:mm}");
+        Console.WriteLine($"Distance: {distance}km");
+        Console.WriteLine($"Crew: Pilot: {crew.Pilot.FName}, Copilot: {crew.Copilot.FName}");
+        Console.WriteLine($"Plane: {plane.Name}");
+        Console.WriteLine("Do you want to proceed? (Y/N)");
 
-        Console.WriteLine("Press any key to continue...");
+        if (Console.ReadKey(true).Key == ConsoleKey.Y)
+            try
+            {
+                new Flight(departureAirport, arrivalAirport, departureTime, arrivalTime, crew, plane, distance);
+                Console.WriteLine("Flight added successfully! Press any key to continue...");
+            }
+            catch (ArgumentException e)
+            {
+                Helper.HandleInputError(e.Message);
+            }
+        else
+            Console.WriteLine("Action cancelled. Press any key to continue...");
+
         Console.ReadKey();
+    }
+
+    private static long GetDistance()
+    {
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine("Enter distance in kilometers:");
+            if (long.TryParse(Console.ReadLine(), out var distance) && distance > 0) return distance;
+            Helper.HandleInputError("Invalid distance. Must be a positive number.");
+        }
     }
 
     private static string GetAirport(string message)
@@ -93,7 +114,8 @@ public static class FlightsMenu
         var availableCrews = Crew.All.ToList();
         if (availableCrews.Count == 0)
         {
-            Console.WriteLine("No crews available.");
+            Console.WriteLine("No crews available. Press any key to continue...");
+            Console.ReadKey();
             return null;
         }
 
@@ -118,7 +140,8 @@ public static class FlightsMenu
         var availablePlanes = Plane.All.ToList();
         if (availablePlanes.Count == 0)
         {
-            Console.WriteLine("No planes available.");
+            Console.WriteLine("No planes available. Press any key to continue...");
+            Console.ReadKey();
             return null;
         }
 
@@ -155,10 +178,14 @@ public static class FlightsMenu
                     Console.WriteLine(
                         $"2. Arrival Airport: {flight.ArrivalAirport}");
                     Console.WriteLine(
-                        $"3. Departure Time: {flight.DepartureTime}");
+                        $"3. Distance: {flight.Distance}km");
                     Console.WriteLine(
-                        $"4. Arrival Time: {flight.ArrivalTime}");
-                    Console.WriteLine("5. Return");
+                        $"4. Departure Time: {flight.DepartureTime}");
+                    Console.WriteLine(
+                        $"5. Arrival Time: {flight.ArrivalTime}");
+                    Console.WriteLine(
+                        $"6. Crew: Pilot: {flight.Crew.Pilot.FName}, Copilot: {flight.Crew.Copilot.FName}");
+                    Console.WriteLine("7. Return");
 
                     if (Enum.TryParse<EditMenuItem>(Console.ReadLine(), true, out var choice))
                         switch (choice)
@@ -169,11 +196,24 @@ public static class FlightsMenu
                             case EditMenuItem.ArrivalAirport:
                                 flight.ArrivalAirport = GetAirport("Enter new arrival airport:");
                                 continue;
+                            case EditMenuItem.Distance:
+                                flight.Distance = GetDistance();
+                                continue;
                             case EditMenuItem.DepartureTime:
                                 flight.UpdateFlightTime(GetDateTime("Enter new departure time:"), flight.ArrivalTime);
                                 continue;
                             case EditMenuItem.ArrivalTime:
                                 flight.UpdateFlightTime(flight.DepartureTime, GetDateTime("Enter new arrival time:"));
+                                continue;
+                            case EditMenuItem.Crew:
+                                var newCrew = GetCrew();
+                                if (newCrew != null)
+                                {
+                                    flight.Crew.RemoveFlight(flight);
+                                    flight.Crew = newCrew;
+                                    newCrew.AddFlight(flight);
+                                }
+
                                 continue;
                             case EditMenuItem.Return:
                                 return;
@@ -202,19 +242,28 @@ public static class FlightsMenu
             var flight = Flight.All.FirstOrDefault(f => f.Id == id);
             if (flight != null)
             {
-                if (flight.Bookings.Count > flight.Plane.Capacity * 0.5)
+                Console.WriteLine(
+                    $"Are you sure you want to delete flight from {flight.DepartureAirport} to {flight.ArrivalAirport} on {flight.DepartureTime:yyyy-MM-dd}? (Y/N)");
+                if (Console.ReadKey(true).Key == ConsoleKey.Y)
                 {
-                    Helper.HandleInputError("Cannot delete a flight that is more than 50% full.");
-                }
-                else if (flight.DepartureTime > DateTimeOffset.Now.AddHours(24))
-                {
-                    flight.Delete();
-                    Console.WriteLine("Flight deleted successfully.");
+                    if (flight.Bookings.Count > flight.Plane.ClassCapacities.Values.Sum() * 0.5)
+                    {
+                        Helper.HandleInputError("Cannot delete a flight that is more than 50% full.");
+                    }
+                    else if (flight.DepartureTime > DateTimeOffset.Now.AddHours(24))
+                    {
+                        flight.Delete();
+                        Console.WriteLine("Flight deleted successfully.");
+                    }
+                    else
+                    {
+                        Helper.HandleInputError(
+                            "Cannot delete a flight that is in the past or departs in less than 24 hours.");
+                    }
                 }
                 else
                 {
-                    Helper.HandleInputError(
-                        "Cannot delete a flight that is in the past or departs in less than 24 hours.");
+                    Console.WriteLine("Deletion cancelled.");
                 }
             }
             else
@@ -244,8 +293,10 @@ public static class FlightsMenu
     {
         DepartureAirport = 1,
         ArrivalAirport = 2,
-        DepartureTime = 3,
-        ArrivalTime = 4,
-        Return = 5
+        Distance = 3,
+        DepartureTime = 4,
+        ArrivalTime = 5,
+        Crew = 6,
+        Return = 7
     }
 }

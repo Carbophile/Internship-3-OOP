@@ -4,7 +4,7 @@ namespace Internship_3_OOP.Menus;
 
 public static class FlightFilteringMenu
 {
-    public static void ShowFlights(IEnumerable<Flight> flights)
+    private static void ShowFlights(IEnumerable<Flight> flights)
     {
         var flightsList = flights.ToList();
         if (flightsList.Count == 0)
@@ -17,9 +17,11 @@ public static class FlightFilteringMenu
             for (var i = 0; i < flightsList.Count; i++)
             {
                 var flight = flightsList[i];
-                var availableSeats = flight.Plane.Capacity - flight.Bookings.Count;
+                var availableSeats = string.Join(", ",
+                    flight.Plane.ClassCapacities.Select(kv =>
+                        $"{kv.Key}: {kv.Value - flight.Bookings.Count(b => b.FlightClass == kv.Key)}"));
                 Console.WriteLine(
-                    $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}, Duration: {flight.Duration:hh\\:mm}, Available Seats: {availableSeats}");
+                    $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}, Duration: {flight.Duration:hh\\:mm}, Available Seats: [{availableSeats}]");
             }
         }
     }

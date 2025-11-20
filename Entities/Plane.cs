@@ -11,12 +11,11 @@ public sealed class Plane : Entity<Plane>
 
     private readonly List<Flight> _flights = [];
 
-    public Plane(string name, DateOnly manufactureDate, IReadOnlyList<Class> classes, int capacity)
+    public Plane(string name, DateOnly manufactureDate, Dictionary<Class, int> classCapacities)
     {
         Name = name;
         ManufactureDate = manufactureDate;
-        Classes = classes;
-        Capacity = capacity;
+        ClassCapacities = classCapacities;
     }
 
     public string Name
@@ -53,39 +52,7 @@ public sealed class Plane : Entity<Plane>
         }
     }
 
-    public int Capacity
-    {
-        get;
-        set
-        {
-            if (value > 0)
-            {
-                field = value;
-                UpdateLastChanged();
-            }
-            else
-            {
-                throw new ArgumentException(value.ToString());
-            }
-        }
-    }
-
-    public IReadOnlyList<Class> Classes
-    {
-        get;
-        set
-        {
-            if (Helper.ValidateList(value))
-            {
-                field = value;
-                UpdateLastChanged();
-            }
-            else
-            {
-                throw new ArgumentException(value.ToString());
-            }
-        }
-    }
+    public Dictionary<Class, int> ClassCapacities { get; set; }
 
     public IReadOnlyList<Flight> Flights => _flights;
 
