@@ -37,11 +37,13 @@ public sealed class Crew : Entity<Crew>
             throw new InvalidOperationException(
                 "This crew is already assigned to another flight in the same timeframe.");
         _flights.Add(flight);
+        UpdateLastChanged();
     }
 
     public void RemoveFlight(Flight flight)
     {
         _flights.Remove(flight);
+        UpdateLastChanged();
     }
 
     private bool HasOverlappingFlights(Flight newFlight)

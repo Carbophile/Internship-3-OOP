@@ -41,7 +41,7 @@ public sealed class Plane : Entity<Plane>
         get;
         set
         {
-            if (Helper.ValidateDate(field))
+            if (Helper.ValidateDate(value))
             {
                 field = value;
                 UpdateLastChanged();
@@ -87,19 +87,23 @@ public sealed class Plane : Entity<Plane>
         }
     }
 
+    public IReadOnlyList<Flight> Flights => _flights;
+
     public void AddFlight(Flight flight)
     {
         _flights.Add(flight);
+        UpdateLastChanged();
     }
 
     public void RemoveFlight(Flight flight)
     {
         _flights.Remove(flight);
+        UpdateLastChanged();
     }
 
     public override void Delete()
     {
-        foreach (var flight in _flights) flight.Delete();
+        foreach (var flight in _flights.ToList()) flight.Delete();
         base.Delete();
     }
 }

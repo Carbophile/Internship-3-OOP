@@ -16,17 +16,11 @@ public static class FlightsMenu
             {
                 switch (command)
                 {
-                    case MenuItem.ViewAll:
-                        ViewAllFlights();
+                    case MenuItem.ViewAndSearch:
+                        FlightFilteringMenu.Menu(Flight.All);
                         continue;
                     case MenuItem.Add:
                         AddFlight();
-                        continue;
-                    case MenuItem.SearchByName:
-                        SearchFlightByName();
-                        continue;
-                    case MenuItem.SearchById:
-                        SearchFlightById();
                         continue;
                     case MenuItem.EditById:
                         EditFlightById();
@@ -41,29 +35,6 @@ public static class FlightsMenu
                 Helper.HandleInputError();
             }
         }
-    }
-
-    private static void ViewAllFlights()
-    {
-        Console.Clear();
-        var flights = Flight.All;
-        if (flights.Count == 0)
-        {
-            Console.WriteLine("No flights available.");
-        }
-        else
-        {
-            Console.WriteLine("Available flights:");
-            for (var i = 0; i < flights.Count; i++)
-            {
-                var flight = flights[i];
-                Console.WriteLine(
-                    $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
-            }
-        }
-
-        Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
     }
 
     private static void AddFlight()
@@ -167,61 +138,6 @@ public static class FlightsMenu
         }
     }
 
-    private static void SearchFlightByName()
-    {
-        Console.Clear();
-        Console.WriteLine("Enter departure airport (optional):");
-        var departure = Console.ReadLine();
-        Console.WriteLine("Enter arrival airport (optional):");
-        var arrival = Console.ReadLine();
-
-        var filteredFlights = Flight.All.Where(f =>
-            (string.IsNullOrEmpty(departure) ||
-             f.DepartureAirport.Equals(departure, StringComparison.OrdinalIgnoreCase)) &&
-            (string.IsNullOrEmpty(arrival) ||
-             f.ArrivalAirport.Equals(arrival, StringComparison.OrdinalIgnoreCase))).ToList();
-
-        if (filteredFlights.Count == 0)
-        {
-            Console.WriteLine("No flights found.");
-        }
-        else
-        {
-            Console.WriteLine("Found flights:");
-            for (var i = 0; i < filteredFlights.Count; i++)
-            {
-                var flight = filteredFlights[i];
-                Console.WriteLine(
-                    $"{i + 1}. From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
-            }
-        }
-
-        Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
-    }
-
-    private static void SearchFlightById()
-    {
-        Console.Clear();
-        Console.WriteLine("Enter flight ID:");
-        if (Guid.TryParse(Console.ReadLine(), out var id))
-        {
-            var flight = Flight.All.FirstOrDefault(f => f.Id == id);
-            if (flight != null)
-                Console.WriteLine(
-                    $"From: {flight.DepartureAirport}, To: {flight.ArrivalAirport}, Distance: {flight.Distance}km, Departure: {flight.DepartureTime}");
-            else
-                Helper.HandleInputError("Flight not found.");
-        }
-        else
-        {
-            Helper.HandleInputError("Invalid ID format.");
-        }
-
-        Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
-    }
-
     private static void EditFlightById()
     {
         Console.Clear();
@@ -317,10 +233,8 @@ public static class FlightsMenu
 
     private enum MenuItem
     {
-        ViewAll,
+        ViewAndSearch,
         Add,
-        SearchByName,
-        SearchById,
         EditById,
         DeleteById,
         Return
