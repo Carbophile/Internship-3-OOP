@@ -91,7 +91,7 @@ public static class PassengersMenu
                 switch (Console.ReadKey(true).Key)
                 {
                     case ConsoleKey.Y:
-                        var newPassenger = new Passenger(fname, lname, birthDate, gender, email, password);
+                        new Passenger(fname, lname, birthDate, gender, email, password);
                         Console.WriteLine("\nRegistration successful! Press any key to continue...");
                         Console.ReadKey();
                         return;
@@ -265,7 +265,7 @@ public static class PassengersMenu
                     {
                         var booking = bookings[i];
                         Console.WriteLine(
-                            $"{i + 1}. Flight from {booking.Flight.DepartureAirport} to {booking.Flight.ArrivalAirport}, Distance: {booking.Flight.Distance}km, at {booking.Flight.DepartureTime}");
+                            $"{i + 1}. Flight from {booking.Flight.DepartureAirport} to {booking.Flight.ArrivalAirport}, Class: {booking.FlightClass}, Distance: {booking.Flight.Distance}km, at {booking.Flight.DepartureTime}");
                     }
                 }
 
@@ -296,8 +296,23 @@ public static class PassengersMenu
                 if (int.TryParse(Console.ReadLine(), out var choice) && choice > 0 && choice <= availableFlights.Count)
                 {
                     var flight = availableFlights[choice - 1];
-                    var newBooking = new Booking(passenger, flight);
-                    Console.WriteLine("Booking successful! Press any key to continue...");
+                    
+                    Console.WriteLine("Select a class:");
+                    var k = 0;
+                    foreach (var flightClass in flight.Plane.Classes)
+                    {
+                        Console.WriteLine($"{k++} - {flightClass}");
+                    }
+
+                    if (int.TryParse(Console.ReadLine(), out var classChoice) && classChoice >= 0 && classChoice < flight.Plane.Classes.Count)
+                    {
+                        new Booking(passenger, flight, flight.Plane.Classes[classChoice]);
+                        Console.WriteLine("Booking successful! Press any key to continue...");
+                    }
+                    else
+                    {
+                        Helper.HandleInputError("Invalid class choice.");
+                    }
                 }
                 else if (choice == 0)
                 {
@@ -305,7 +320,7 @@ public static class PassengersMenu
                 }
                 else
                 {
-                    Helper.HandleInputError("Invalid choice.");
+                    Helper.HandleInputError("Invalid flight choice.");
                 }
 
                 Console.ReadKey();
